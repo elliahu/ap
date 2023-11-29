@@ -3,6 +3,7 @@
 #include <vector>
 #include <cmath>
 #include "matrix.h"
+#include "threadpool.h"
 
 namespace AP
 {
@@ -16,6 +17,8 @@ namespace AP
 
         inline void fit()
         {
+            threadPool.start();
+
             initialize();
 
             for (unsigned int iter = 0; iter < max_iter_; ++iter)
@@ -25,6 +28,8 @@ namespace AP
             }
 
             identifyClusters();
+
+            threadPool.stop();
         }
 
         inline const std::vector<int> &getLabels() const
@@ -63,12 +68,18 @@ namespace AP
 
             for (unsigned int i = 0; i < n; ++i)
             {
-                for (unsigned int k = 0; k < n; ++k)
-                {
-                    responsibilities_[i][k] = similarities_[i][k] - s_max[i];
-                    availabilities_[i][k] = similarities_[i][k] - a_max[k];
-                }
+                threadPool.queue_job(
+                    [&, i]()
+                    {
+                        for (unsigned int k = 0; k < n; ++k)
+                        {
+                            responsibilities_[i][k] = similarities_[i][k] - s_max[i];
+                            availabilities_[i][k] = similarities_[i][k] - a_max[k];
+                        }
+                    });
             }
+
+            threadPool.wait();
         }
 
         inline void updateResponsibility()
@@ -77,27 +88,34 @@ namespace AP
 
             for (unsigned int i = 0; i < n; ++i)
             {
+
                 for (unsigned int k = 0; k < n; ++k)
                 {
-                    double max_val = NEG_INFINITY;
+                    threadPool.queue_job(
+                        [&, i, k, n]()
+                        {
+                            double max_val = NEG_INFINITY;
 
-                    for (unsigned int kk = 0; kk < k; ++kk)
-                    {
-                        double val = availabilities_[i][kk] + similarities_[i][kk];
-                        if (val > max_val)
-                            max_val = val;
-                    }
+                            for (unsigned int kk = 0; kk < k; ++kk)
+                            {
+                                double val = availabilities_[i][kk] + similarities_[i][kk];
+                                if (val > max_val)
+                                    max_val = val;
+                            }
 
-                    for (unsigned int kk = k + 1; kk < n; ++kk)
-                    {
-                        double val = availabilities_[i][kk] + similarities_[i][kk];
-                        if (val > max_val)
-                            max_val = val;
-                    }
+                            for (unsigned int kk = k + 1; kk < n; ++kk)
+                            {
+                                double val = availabilities_[i][kk] + similarities_[i][kk];
+                                if (val > max_val)
+                                    max_val = val;
+                            }
 
-                    responsibilities_[i][k] = similarities_[i][k] - max_val;
+                            responsibilities_[i][k] = similarities_[i][k] - max_val;
+                        });
                 }
             }
+
+            threadPool.wait();
         }
 
         inline void updateAvailability()
@@ -108,46 +126,60 @@ namespace AP
 
             for (unsigned int i = 0; i < n; ++i)
             {
+
                 for (unsigned int k = 0; k < n; ++k)
                 {
                     if (i != k)
                     {
-                        double sum = 0.0;
-                        for (unsigned int ii = 0; ii < i; ++ii)
-                        {
-                            sum += std::max(0.0, responsibilities_[ii][k]);
-                        }
-                        for (unsigned int ii = i + 1; ii < k; ++ii)
-                        {
-                            sum += std::max(0.0, responsibilities_[ii][k]);
-                        }
-                        for (unsigned int ii = k + 1; ii < n; ++ii)
-                        {
-                            sum += std::max(0.0, responsibilities_[ii][k]);
-                        }
+                        threadPool.queue_job(
+                            [&, i, k, n]()
+                            {
+                                double sum = 0.0;
+                                for (unsigned int ii = 0; ii < i; ++ii)
+                                {
+                                    sum += std::max(0.0, responsibilities_[ii][k]);
+                                }
+                                for (unsigned int ii = i + 1; ii < k; ++ii)
+                                {
+                                    sum += std::max(0.0, responsibilities_[ii][k]);
+                                }
+                                for (unsigned int ii = k + 1; ii < n; ++ii)
+                                {
+                                    sum += std::max(0.0, responsibilities_[ii][k]);
+                                }
 
-                        r_plus_similarity[i][k] = sum;
+                                r_plus_similarity[i][k] = sum;
+                            });
                     }
                 }
             }
+
+            threadPool.wait();
 
             for (unsigned int i = 0; i < n; ++i)
             {
+
                 for (unsigned int k = 0; k < n; ++k)
                 {
-                    double sum = 0.0;
-                    for (unsigned int kk = 0; kk < k; ++kk)
-                    {
-                        sum += std::max(0.0, r_plus_similarity[kk][i]);
-                    }
-                    for (unsigned int kk = k + 1; kk < n; ++kk)
-                    {
-                        sum += std::max(0.0, r_plus_similarity[kk][i]);
-                    }
+                    threadPool.queue_job(
+                        [&, i, k, n, r_plus_similarity]()
+                        {
+                            double sum = 0.0;
+                            for (unsigned int kk = 0; kk < k; ++kk)
+                            {
+                                sum += std::max(0.0, r_plus_similarity[kk][i]);
+                            }
+                            for (unsigned int kk = k + 1; kk < n; ++kk)
+                            {
+                                sum += std::max(0.0, r_plus_similarity[kk][i]);
+                            }
 
-                    availabilities_[i][k] = r_plus_similarity[i][k] + sum;
+                            availabilities_[i][k] = r_plus_similarity[i][k] + sum;
+                        });
                 }
             }
+
+            threadPool.wait();
         }
 
         inline void identifyClusters()
@@ -175,6 +207,7 @@ namespace AP
         }
 
     private:
+        Threading::ThreadPool threadPool{};
         const Matrix &similarities_;
         unsigned int max_iter_;
 

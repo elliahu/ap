@@ -8,6 +8,15 @@ namespace AP
 
     typedef std::vector<std::vector<double>> Matrix;
 
+    enum Diagonal
+    {
+        Min,
+        Max,
+        Median,
+        Inf,
+        NegInf
+    };
+
     inline Matrix CreateMatrix(size_t width, size_t height, double value = 0.0)
     {
         return std::vector<std::vector<double>>(height, std::vector<double>(width, value));
@@ -64,12 +73,12 @@ namespace AP
 
             std::sort(medianArray.begin(), medianArray.end());
 
-            return medianArray[medianArray.size()/ 2];
+            return medianArray[medianArray.size() / 2];
         }
 
         inline double min(const Matrix &m)
         {
-             auto width = MatrixWidth(m);
+            auto width = MatrixWidth(m);
             auto height = MatrixHeight(m);
             std::vector<double> t{};
 
@@ -85,7 +94,7 @@ namespace AP
 
         inline double max(const Matrix &m)
         {
-             auto width = MatrixWidth(m);
+            auto width = MatrixWidth(m);
             auto height = MatrixHeight(m);
             std::vector<double> t{};
 

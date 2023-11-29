@@ -3,19 +3,11 @@
 #include "parser.h"
 
 int main() {
-    AP::Matrix _similarities = {
-        {0.9, 0.3, 0.1},
-        {0.4, 0.8, 0.6},
-        {0.2, 0.5, 0.7}
-    };
-
-
     AP::Parser parser{};
-    parser.parseCSV("../data/mnist_test.csv");
-    AP::Matrix similarities = parser.getSimilarity();
+    parser.parseCSV("../data/test.csv");
+    AP::Matrix similarities = parser.getSimilarity(AP::Diagonal::Min);
 
-
-    AP::AffinityPropagation affinityPropagation(similarities);
+    AP::AffinityPropagation affinityPropagation(similarities, 10);
     affinityPropagation.fit();
 
     const std::vector<int>& labels = affinityPropagation.getLabels();

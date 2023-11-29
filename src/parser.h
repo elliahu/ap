@@ -8,6 +8,7 @@
 #include <limits>
 #include <algorithm>
 #include "matrix.h"
+#include "threadpool.h"
 
 namespace AP
 {
@@ -34,7 +35,7 @@ namespace AP
 
                 while (std::getline(ss, cell, ','))
                 {
-                    if(!skipFirstColumn)
+                    if (!skipFirstColumn)
                     {
                         row.push_back(std::stod(cell));
                         skipFirstColumn = false;
@@ -43,52 +44,85 @@ namespace AP
                     {
                         skipFirstColumn = false;
                     }
-                    
                 }
                 points_.push_back(row);
                 skipFirstColumn = true;
             }
         }
 
-        inline Matrix getSimilarity()
+        inline Matrix getSimilarity(Diagonal diagonal = Median)
         {
             auto width = MatrixWidth(points_);
             auto height = MatrixHeight(points_);
             Matrix similarityMatrix = CreateMatrix(width, height, 0.0);
-            
+
+            threadPool.start();
 
             for (size_t i = 0; i < height; ++i)
             {
-                for (size_t j = 0; j < width; ++j)
-                {
-                    if (i != j)
+                threadPool.queue_job(
+                    [&, i]()
                     {
-                        double nsqred = negSquaredEuclideanDistance(points_[i], points_[j]);
-                        similarityMatrix[i][j] = nsqred;
-                    }
-                }
+                        for (size_t j = 0; j < width; ++j)
+                        {
+                            if (i != j)
+                            {
+                                double nsqred = negSquaredEuclideanDistance(points_[i], points_[j]);
+                                similarityMatrix[i][j] = nsqred;
+                            }
+                        }
+                    });
             }
 
-            
+            threadPool.wait();
+
             double median = Math::median(similarityMatrix);
             double min = Math::min(similarityMatrix);
+            double max = Math::max(similarityMatrix);
+            double inf = std::numeric_limits<double>::max();
+            double negInf = std::numeric_limits<double>::min();
 
             for (size_t i = 0; i < height; ++i)
             {
-                for (size_t j = 0; j < width; ++j)
-                {
-                    if (i == j)
+                threadPool.queue_job(
+                    [&, i]()
                     {
-                        similarityMatrix[i][j] = min;
-                    }
-                }
+                        for (size_t j = 0; j < width; ++j)
+                        {
+                            if (i == j)
+                            {
+                                switch (diagonal)
+                                {
+                                case Min:
+                                    similarityMatrix[i][j] = min;
+                                    break;
+                                case Max:
+                                    similarityMatrix[i][j] = max;
+                                    break;
+                                case Median:
+                                    similarityMatrix[i][j] = median;
+                                    break;
+                                case Inf:
+                                    similarityMatrix[i][j] = inf;
+                                    break;
+                                case NegInf:
+                                    similarityMatrix[i][j] = negInf;
+                                    break;
+                                default:
+                                    break;
+                                }
+                            }
+                        }
+                    });
             }
+
+            threadPool.wait();
+            threadPool.stop();
 
             return similarityMatrix;
         }
 
     private:
-
         inline double negSquaredEuclideanDistance(const std::vector<double> &point1, const std::vector<double> &point2)
         {
             if (point1.size() != point2.size())
@@ -107,5 +141,6 @@ namespace AP
         }
 
         Matrix points_;
+        Threading::ThreadPool threadPool{};
     };
 }
