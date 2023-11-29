@@ -17,7 +17,7 @@ namespace AP
 
         inline void fit()
         {
-            threadPool.start();
+            thread_pool_.start();
 
             initialize();
 
@@ -29,7 +29,7 @@ namespace AP
 
             identifyClusters();
 
-            threadPool.stop();
+            thread_pool_.stop();
         }
 
         inline const std::vector<int> &getLabels() const
@@ -68,7 +68,7 @@ namespace AP
 
             for (unsigned int i = 0; i < n; ++i)
             {
-                threadPool.queue_job(
+                thread_pool_.queue_job(
                     [&, i]()
                     {
                         for (unsigned int k = 0; k < n; ++k)
@@ -79,7 +79,7 @@ namespace AP
                     });
             }
 
-            threadPool.wait();
+            thread_pool_.wait();
         }
 
         inline void updateResponsibility()
@@ -91,7 +91,7 @@ namespace AP
 
                 for (unsigned int k = 0; k < n; ++k)
                 {
-                    threadPool.queue_job(
+                    thread_pool_.queue_job(
                         [&, i, k, n]()
                         {
                             double max_val = NEG_INFINITY;
@@ -115,7 +115,7 @@ namespace AP
                 }
             }
 
-            threadPool.wait();
+            thread_pool_.wait();
         }
 
         inline void updateAvailability()
@@ -131,7 +131,7 @@ namespace AP
                 {
                     if (i != k)
                     {
-                        threadPool.queue_job(
+                        thread_pool_.queue_job(
                             [&, i, k, n]()
                             {
                                 double sum = 0.0;
@@ -154,14 +154,14 @@ namespace AP
                 }
             }
 
-            threadPool.wait();
+            thread_pool_.wait();
 
             for (unsigned int i = 0; i < n; ++i)
             {
 
                 for (unsigned int k = 0; k < n; ++k)
                 {
-                    threadPool.queue_job(
+                    thread_pool_.queue_job(
                         [&, i, k, n, r_plus_similarity]()
                         {
                             double sum = 0.0;
@@ -179,7 +179,7 @@ namespace AP
                 }
             }
 
-            threadPool.wait();
+            thread_pool_.wait();
         }
 
         inline void identifyClusters()
@@ -207,7 +207,7 @@ namespace AP
         }
 
     private:
-        Threading::ThreadPool threadPool{};
+        Threading::ThreadPool thread_pool_{};
         const Matrix &similarities_;
         unsigned int max_iter_;
 

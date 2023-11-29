@@ -56,11 +56,11 @@ namespace AP
             auto height = MatrixHeight(points_);
             Matrix similarityMatrix = CreateMatrix(width, height, 0.0);
 
-            threadPool.start();
+            thread_pool_.start();
 
             for (size_t i = 0; i < height; ++i)
             {
-                threadPool.queue_job(
+                thread_pool_.queue_job(
                     [&, i]()
                     {
                         for (size_t j = 0; j < width; ++j)
@@ -74,7 +74,7 @@ namespace AP
                     });
             }
 
-            threadPool.wait();
+            thread_pool_.wait();
 
             double median = Math::median(similarityMatrix);
             double min = Math::min(similarityMatrix);
@@ -84,7 +84,7 @@ namespace AP
 
             for (size_t i = 0; i < height; ++i)
             {
-                threadPool.queue_job(
+                thread_pool_.queue_job(
                     [&, i]()
                     {
                         for (size_t j = 0; j < width; ++j)
@@ -116,8 +116,8 @@ namespace AP
                     });
             }
 
-            threadPool.wait();
-            threadPool.stop();
+            thread_pool_.wait();
+            thread_pool_.stop();
 
             return similarityMatrix;
         }
@@ -141,6 +141,6 @@ namespace AP
         }
 
         Matrix points_;
-        Threading::ThreadPool threadPool{};
+        Threading::ThreadPool thread_pool_{};
     };
 }
