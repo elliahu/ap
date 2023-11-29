@@ -15,7 +15,7 @@ namespace AP
     class Parser
     {
     public:
-        inline void parseCSV(std::string filename)
+        inline void parseCSV(std::string filename, uint32_t limit_rows = 0)
         {
             std::ifstream file(filename);
 
@@ -25,10 +25,15 @@ namespace AP
                 exit(EXIT_FAILURE);
             }
             bool skipFirstColumn = true;
+            uint32_t rows_read = 0;
             std::string line;
             std::getline(file, line); // skip first row
+            
             while (std::getline(file, line))
             {
+                if(rows_read >= limit_rows && limit_rows != 0)
+                    break;
+               
                 std::stringstream ss(line);
                 std::string cell;
                 std::vector<double> row;
@@ -47,7 +52,10 @@ namespace AP
                 }
                 points_.push_back(row);
                 skipFirstColumn = true;
+                rows_read++;
             }
+
+            std::cout << "File " << filename << " parsed and " << rows_read << " rows were retrieved." << std::endl;
         }
 
         inline Matrix getSimilarity(Diagonal diagonal = Median)
@@ -118,7 +126,6 @@ namespace AP
 
             thread_pool_.wait();
             thread_pool_.stop();
-
             return similarityMatrix;
         }
 
