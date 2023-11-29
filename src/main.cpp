@@ -11,7 +11,7 @@ int main() {
 
 
     AP::Parser parser{};
-    parser.parseCSV("../data/test.csv");
+    parser.parseCSV("../data/mnist_test.csv");
     AP::Matrix similarities = parser.getSimilarity();
 
 

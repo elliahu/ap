@@ -71,6 +71,7 @@ namespace AP
 
             
             double median = Math::median(similarityMatrix);
+            double min = Math::min(similarityMatrix);
 
             for (size_t i = 0; i < height; ++i)
             {
@@ -78,7 +79,7 @@ namespace AP
                 {
                     if (i == j)
                     {
-                        similarityMatrix[i][j] = 0.0;
+                        similarityMatrix[i][j] = min;
                     }
                 }
             }
