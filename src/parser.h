@@ -7,6 +7,7 @@
 #include <string>
 #include <limits>
 #include <algorithm>
+#include <chrono>
 #include "matrix.h"
 #include "threadpool.h"
 
@@ -27,13 +28,14 @@ namespace AP
             bool skipFirstColumn = true;
             uint32_t rows_read = 0;
             std::string line;
+            auto start = std::chrono::high_resolution_clock::now();
+
             std::getline(file, line); // skip first row
-            
             while (std::getline(file, line))
             {
-                if(rows_read >= limit_rows && limit_rows != 0)
+                if (rows_read >= limit_rows && limit_rows != 0)
                     break;
-               
+
                 std::stringstream ss(line);
                 std::string cell;
                 std::vector<double> row;
@@ -54,8 +56,10 @@ namespace AP
                 skipFirstColumn = true;
                 rows_read++;
             }
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-            std::cout << "File " << filename << " parsed and " << rows_read << " rows were retrieved." << std::endl;
+            std::cout << "File " << filename << " parsed and " << rows_read << " rows were retrieved in " << duration.count() << " milliseconds" << std::endl;
         }
 
         inline Matrix getSimilarity(Diagonal diagonal = Median)
@@ -63,6 +67,8 @@ namespace AP
             auto width = MatrixWidth(points_);
             auto height = MatrixHeight(points_);
             Matrix similarityMatrix = CreateMatrix(width, height, 0.0);
+
+            auto start = std::chrono::high_resolution_clock::now();
 
             thread_pool_.start();
 
@@ -126,6 +132,11 @@ namespace AP
 
             thread_pool_.wait();
             thread_pool_.stop();
+
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+            std::cout << "Computed similarity matrix in " << duration.count() << " millisecond" << std::endl;
+
             return similarityMatrix;
         }
 

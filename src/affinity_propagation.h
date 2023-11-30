@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <chrono>
 #include "matrix.h"
 #include "threadpool.h"
 
@@ -18,13 +19,17 @@ namespace AP
         inline void fit()
         {
             thread_pool_.start();
-
+            
             initialize();
 
             for (unsigned int iter = 0; iter < max_iter_; ++iter)
             {
+                auto start = std::chrono::high_resolution_clock::now();
                 updateResponsibility();
                 updateAvailability();
+                auto end = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                std::cout << "Iteration " << iter << " out of " << max_iter_ << " finished in " << duration.count() << " milliseconds" << std::endl;
             }
 
             identifyClusters();
@@ -40,6 +45,7 @@ namespace AP
     private:
         inline void initialize()
         {
+            auto start = std::chrono::high_resolution_clock::now();
             unsigned int n = similarities_.size();
 
             responsibilities_.resize(n, std::vector<double>(n, 0.0));
@@ -69,7 +75,7 @@ namespace AP
             for (unsigned int i = 0; i < n; ++i)
             {
                 thread_pool_.queue_job(
-                    [&, i]()
+                    [&, i, n, s_max, a_max]()
                     {
                         for (unsigned int k = 0; k < n; ++k)
                         {
@@ -80,6 +86,10 @@ namespace AP
             }
 
             thread_pool_.wait();
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+            std::cout << "Prepared matrices of size " << n << "x" << n << " in " << duration.count() << " milliseconds" << std::endl;;
         }
 
         inline void updateResponsibility()
