@@ -16,6 +16,44 @@ namespace AP
     class Parser
     {
     public:
+        inline void parseTXT(std::string filename, uint32_t limit_rows = 0)
+        {
+            std::ifstream file(filename);
+
+            if (!file.is_open())
+            {
+                std::cerr << "Error opening file: " << filename << std::endl;
+                exit(EXIT_FAILURE);
+            }
+
+            uint32_t rows_read = 0;
+            auto start = std::chrono::high_resolution_clock::now();
+
+            // Read the file line by line
+            std::string line;
+            while (std::getline(file, line))
+            {
+                std::istringstream iss(line);
+                double value;
+                std::vector<double> row;
+
+                // Read each value in the line
+                while (iss >> value)
+                {
+                    row.push_back(value);
+                }
+
+                // Store the row in the vector
+                points_.push_back(row);
+                rows_read++;
+            }
+
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+            std::cout << "File " << filename << " parsed and " << rows_read << " rows were retrieved in " << duration.count() << " milliseconds" << std::endl;
+        }
+
         inline void parseCSV(std::string filename, uint32_t limit_rows = 0)
         {
             std::ifstream file(filename);
@@ -93,8 +131,8 @@ namespace AP
             double median = Math::median(similarityMatrix);
             double min = Math::min(similarityMatrix);
             double max = Math::max(similarityMatrix);
-            double inf = std::numeric_limits<double>::max();
-            double negInf = std::numeric_limits<double>::min();
+            double inf = std::numeric_limits<double>::infinity();
+            double negInf = -std::numeric_limits<double>::infinity();
 
             for (size_t i = 0; i < height; ++i)
             {

@@ -42,6 +42,15 @@ namespace AP
             return labels_;
         }
 
+        inline std::vector<int> getUniqueClusters()
+        {
+            std::vector<int> lbls_(labels_);
+            std::sort(lbls_.begin(), lbls_.end());
+            auto last = std::unique(lbls_.begin(), lbls_.end());
+            lbls_.erase(last, lbls_.end());
+            return lbls_;
+        }
+
     private:
         inline void initialize()
         {
@@ -50,7 +59,7 @@ namespace AP
 
             responsibilities_.resize(n, std::vector<double>(n, 0.0));
             availabilities_.resize(n, std::vector<double>(n, 0.0));
-
+            
             std::vector<double> s_max(n, NEG_INFINITY);
             std::vector<double> a_max(n, NEG_INFINITY);
 

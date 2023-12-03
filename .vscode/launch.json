@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/main",
-            "args": [],
+            "args": ["../data/test_small.txt"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

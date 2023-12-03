@@ -17,19 +17,27 @@
  * make sure the path to source data is relative to CWD when running the build binary directly (such as './main')
  */
 
-int main()
+int main(int argc, char *argv[])
 {
     AP::Parser parser{};
-    parser.parseCSV("../data/mnist_test.csv");
-    AP::Matrix similarities = parser.getSimilarity(AP::Diagonal::Min);
+    parser.parseTXT("../data/test_extra_small.txt");
+    AP::Matrix similarities = parser.getSimilarity(AP::Diagonal::Median);
 
     auto start = std::chrono::high_resolution_clock::now();
     AP::AffinityPropagation affinityPropagation(similarities, 10);
     affinityPropagation.fit();
 
     const std::vector<int> &labels = affinityPropagation.getLabels();
+    auto clusters = affinityPropagation.getUniqueClusters();
 
-    std::cout << "\n-------------\nClusters:\n------------\n";
+    std::cout << "\n-------------\nClusters:\n------------\n{ ";
+    for(auto& cluster : clusters)
+    {
+        std::cout << cluster << ", ";
+    }
+    std::cout << " }" << std::endl;
+
+    std::cout << "\n-------------\nCluster members:\n------------\n";
     for (size_t i = 0; i < labels.size(); ++i)
     {
         std::cout << "Data point " << i << " belongs to cluster " << labels[i] << "\n";
