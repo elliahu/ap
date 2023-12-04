@@ -14,7 +14,8 @@ namespace AP
         Max,
         Median,
         Inf,
-        NegInf
+        NegInf,
+        Zero
     };
 
     inline Matrix CreateMatrix(size_t width, size_t height, double value = 0.0)

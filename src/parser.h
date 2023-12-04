@@ -53,7 +53,7 @@ namespace AP
 
             std::cout << "File " << filename << " parsed and " << rows_read << " rows were retrieved in " << duration.count() << " milliseconds" << std::endl;
         }
-
+    
         inline void parseCSV(std::string filename, uint32_t limit_rows = 0)
         {
             std::ifstream file(filename);
@@ -159,6 +159,9 @@ namespace AP
                                     break;
                                 case NegInf:
                                     similarityMatrix[i][j] = negInf;
+                                    break;
+                                case Zero:
+                                    similarityMatrix[i][j] = 0.0;
                                     break;
                                 default:
                                     break;
