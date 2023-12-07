@@ -102,7 +102,7 @@ namespace AP
 
         inline Matrix getSimilarity(Diagonal diagonal = Median)
         {
-            auto width = MatrixWidth(points_);
+            auto width = MatrixHeight(points_);
             auto height = MatrixHeight(points_);
             Matrix similarityMatrix = CreateMatrix(width, height, 0.0);
 

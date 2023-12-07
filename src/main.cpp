@@ -21,7 +21,8 @@ int main(int argc, char *argv[])
 {
     AP::Parser parser{};
     parser.parseTXT("../data/test_extra_small.txt");
-    AP::Matrix similarities = parser.getSimilarity(AP::Diagonal::Zero);
+    //parser.parseCSV("../data/test.csv");
+    AP::Matrix similarities = parser.getSimilarity(AP::Diagonal::Median);
 
     auto start = std::chrono::high_resolution_clock::now();
     AP::AffinityPropagation affinityPropagation(similarities, 10);
