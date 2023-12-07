@@ -19,7 +19,7 @@ namespace AP
         inline void fit()
         {
             thread_pool_.start();
-            
+
             initialize();
 
             for (unsigned int iter = 0; iter < max_iter_; ++iter)
@@ -63,7 +63,8 @@ namespace AP
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-            std::cout << "Prepared matrices of size " << n << "x" << n << " in " << duration.count() << " milliseconds" << std::endl;;
+            std::cout << "Prepared matrices of size " << n << "x" << n << " in " << duration.count() << " milliseconds" << std::endl;
+            ;
         }
 
         inline void updateResponsibility()
@@ -106,59 +107,37 @@ namespace AP
         {
             unsigned int n = similarities_.size();
 
-            Matrix r_plus_similarity = CreateMatrix(n, n);
-
             for (unsigned int i = 0; i < n; ++i)
             {
-
-                for (unsigned int k = 0; k < n; ++k)
-                {
-                    if (i != k)
-                    {
-                        thread_pool_.queue_job(
-                            [&, i, k, n]()
-                            {
-                                double sum = 0.0;
-                                for (unsigned int ii = 0; ii < i; ++ii)
-                                {
-                                    sum += std::max(0.0, responsibilities_[ii][k]);
-                                }
-                                for (unsigned int ii = i + 1; ii < k; ++ii)
-                                {
-                                    sum += std::max(0.0, responsibilities_[ii][k]);
-                                }
-                                for (unsigned int ii = k + 1; ii < n; ++ii)
-                                {
-                                    sum += std::max(0.0, responsibilities_[ii][k]);
-                                }
-
-                                r_plus_similarity[i][k] = sum;
-                            });
-                    }
-                }
-            }
-
-            thread_pool_.wait();
-
-            for (unsigned int i = 0; i < n; ++i)
-            {
-
                 for (unsigned int k = 0; k < n; ++k)
                 {
                     thread_pool_.queue_job(
-                        [&, i, k, n, r_plus_similarity]()
+                        [&, i, k, n]()
                         {
-                            double sum = 0.0;
-                            for (unsigned int kk = 0; kk < k; ++kk)
+                            if (i != k)
                             {
-                                sum += std::max(0.0, r_plus_similarity[kk][i]);
+                                double sum = 0.0;
+                                for (unsigned int ii = 0; ii < n; ++ii)
+                                {
+                                    if (ii != i && ii != k)
+                                    {
+                                        sum += std::max(0.0, responsibilities_[ii][k]);
+                                    }
+                                }
+                                availabilities_[i][k] = std::min(0.0, responsibilities_[k][k] + sum);
                             }
-                            for (unsigned int kk = k + 1; kk < n; ++kk)
+                            else
                             {
-                                sum += std::max(0.0, r_plus_similarity[kk][i]);
+                                double sum = 0.0;
+                                for (unsigned int ii = 0; ii < n; ++ii)
+                                {
+                                    if (ii != k)
+                                    {
+                                        sum += std::max(0.0, responsibilities_[ii][k]);
+                                    }
+                                }
+                                availabilities_[i][k] = sum;
                             }
-
-                            availabilities_[i][k] = r_plus_similarity[i][k] + sum;
                         });
                 }
             }
