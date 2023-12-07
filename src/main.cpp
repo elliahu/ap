@@ -15,6 +15,30 @@
  * required environment: Linux, C++20, make build tools
  *
  * make sure the path to source data is relative to CWD when running the build binary directly (such as './main')
+ * 
+ * input:
+ * 
+    participant,0,0,0,0,0
+    a,3,4,3,2,1
+    b,4,3,5,1,1
+    c,3,5,3,3,3
+    d,2,1,3,3,2
+    e,1,1,3,2,3
+
+ * output:
+    -------------
+    Clusters:
+    ------------
+    { 0, 3,  }
+
+    -------------
+    Cluster members:
+    ------------
+    Data point 0 belongs to cluster 0
+    Data point 1 belongs to cluster 0
+    Data point 2 belongs to cluster 0
+    Data point 3 belongs to cluster 3
+    Data point 4 belongs to cluster 3
  */
 
 int main(int argc, char *argv[])
