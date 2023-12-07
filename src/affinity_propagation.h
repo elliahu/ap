@@ -59,42 +59,7 @@ namespace AP
 
             responsibilities_.resize(n, std::vector<double>(n, 0.0));
             availabilities_.resize(n, std::vector<double>(n, 0.0));
-            
-            std::vector<double> s_max(n, NEG_INFINITY);
-            std::vector<double> a_max(n, NEG_INFINITY);
 
-            for (unsigned int i = 0; i < n; ++i)
-            {
-                for (unsigned int k = 0; k < n; ++k)
-                {
-                    if (similarities_[i][k] > s_max[i])
-                        s_max[i] = similarities_[i][k];
-                }
-            }
-
-            for (unsigned int i = 0; i < n; ++i)
-            {
-                for (unsigned int k = 0; k < n; ++k)
-                {
-                    if (similarities_[i][k] > a_max[k])
-                        a_max[k] = similarities_[i][k];
-                }
-            }
-
-            for (unsigned int i = 0; i < n; ++i)
-            {
-                thread_pool_.queue_job(
-                    [&, i, n, s_max, a_max]()
-                    {
-                        for (unsigned int k = 0; k < n; ++k)
-                        {
-                            responsibilities_[i][k] = similarities_[i][k] - s_max[i];
-                            availabilities_[i][k] = similarities_[i][k] - a_max[k];
-                        }
-                    });
-            }
-
-            thread_pool_.wait();
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
